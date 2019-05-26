@@ -1,7 +1,7 @@
 from django.http import JsonResponse, HttpRequest
 from .models import User
 
-def loginIn(request: HttpRequest):
+def login(request: HttpRequest):
 
     data = {}
     msg = ""
@@ -25,7 +25,11 @@ def loginIn(request: HttpRequest):
     if len(password) < 6:
         msg = '密码不能小余6位数'
         return JsonResponse({'code':code,'msg':msg,'data':data})
-    
+    # 已登录
+    if 'user' in request.session:
+        if user == request.session['user']:
+            msg = '已登陆'
+            return JsonResponse({'code':code,'msg':msg,'data':data})
     # login
     try:
         userDB = User.objects.get(name=user)
@@ -35,6 +39,7 @@ def loginIn(request: HttpRequest):
         if userDB.password == password:
             code = 0
             msg = "登录成功"
+            request.session['user'] = userDB.name
         else:
             msg = "用户名或密码错误！"
 
@@ -77,4 +82,16 @@ def register(request: HttpRequest):
         msg = "注册成功"
     else:
         msg = "用户名已存在"
+    return JsonResponse({'code':code,'msg':msg,'data':data})
+
+def logout(request: HttpRequest):
+
+    data = {}
+    msg = "登出成功"
+    code = 0
+
+    try:
+        del request.session['user']
+    except KeyError:
+        pass
     return JsonResponse({'code':code,'msg':msg,'data':data})
